@@ -74,12 +74,12 @@ void hand_controller_component::UpdateInputSystemClick(bool value, float offset)
 
 void hand_controller_component::UpdateInputGripClick(bool value, float offset)
 {
-	UpdateBool(m_InputSystemClick, "/input/grip/click");
+	UpdateBool(m_InputGripClick, "/input/grip/click");
 }
 
 void hand_controller_component::UpdateInputApplication_menuClick(bool value, float offset)
 {
-	UpdateBool(m_InputSystemClick, "/input/application_menu/click");
+	UpdateBool(m_InputApplication_menuClick, "/input/application_menu/click");
 }
 
 void hand_controller_component::UpdateInputTriggerClick(bool value, float offset)

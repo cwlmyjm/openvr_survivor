@@ -230,25 +230,65 @@ void CHandControllerDevice::ReportPoseButtonThread(){
 	LOG(INFO) << "ReportPoseThread:exit!" ;
 }
 void CHandControllerDevice::GetButtonState(const KeyBoardForControllerButton& button_state) {
-	vr::VRControllerState_t vr_controller_state = {};
-	if(button_state.ButtonState & CONTROLLER_BUTTON_TRIGGER){
-		vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
-		vr_controller_state.rAxis[1].x = 1.0f;
-		vr_controller_state.rAxis[1].y = 0.0f;		
-		LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_TRIGGER";
+
+	controller->UpdateInputSystemClick(button_state.ButtonState & CONTROLLER_BUTTON_SYSTEM);
+	controller->UpdateInputGripClick(button_state.ButtonState & CONTROLLER_BUTTON_GRIP);
+	controller->UpdateInputApplication_menuClick(button_state.ButtonState & CONTROLLER_BUTTON_MENU);
+
+	controller->UpdateInputTriggerClick(button_state.ButtonState & CONTROLLER_BUTTON_TRIGGER);
+	if (button_state.ButtonState & CONTROLLER_BUTTON_TRIGGER)
+	{
+		controller->UpdateInputTriggerValue(1.0);
 	}
-	if(button_state.ButtonState & CONTROLLER_BUTTON_MENU){
-		vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu);
-		LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_MENU";
-	}
-	if(button_state.ButtonState & CONTROLLER_BUTTON_SYSTEM){
-		vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_System);
-		LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_SYSTEM";
+	else
+	{
+		controller->UpdateInputTriggerValue(0.0);
 	}
 
-	//add your button like above...
+	float x = 0;
+	if (button_state.ButtonState & CONTROLLER_BUTTON_PAD_RIGHT)
+	{
+		x += 1;
+	}
+	if (button_state.ButtonState & CONTROLLER_BUTTON_PAD_LEFT)
+	{
+		x -= 1;
+	}
+	controller->UpdateInputTrackpadX(x);
+
+	float y = 0;
+	if (button_state.ButtonState & CONTROLLER_BUTTON_PAD_UP)
+	{
+		y += 1;
+	}
+	if (button_state.ButtonState & CONTROLLER_BUTTON_PAD_DOWN)
+	{
+		y -= 1;
+	}
+	controller->UpdateInputTrackpadY(y);
+
+	controller->UpdateInputTrackpadClick(button_state.ButtonState & CONTROLLER_BUTTON_TRACKEPAD_PRESS);
+	controller->UpdateInputTrackpadTouch(button_state.ButtonState & CONTROLLER_BUTTON_TRACKEPAD_PRESS);
 	
-	ReportControllerButton(vr_controller_state,NULL);
+	//vr::VRControllerState_t vr_controller_state = {};
+	//if(button_state.ButtonState & CONTROLLER_BUTTON_TRIGGER){
+	//	vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger);
+	//	vr_controller_state.rAxis[1].x = 1.0f;
+	//	vr_controller_state.rAxis[1].y = 0.0f;		
+	//	LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_TRIGGER";
+	//}
+	//if(button_state.ButtonState & CONTROLLER_BUTTON_MENU){
+	//	vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu);
+	//	LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_MENU";
+	//}
+	//if(button_state.ButtonState & CONTROLLER_BUTTON_SYSTEM){
+	//	vr_controller_state.ulButtonPressed |= vr::ButtonMaskFromId(vr::k_EButton_System);
+	//	LOG(INFO) << "GetButtonState:CONTROLLER_BUTTON_SYSTEM";
+	//}
+
+	////add your button like above...
+	//
+	//ReportControllerButton(vr_controller_state,NULL);
 }
 
 void CHandControllerDevice::SendButtonUpdates(ButtonUpdate ButtonEvent, uint64_t ulMask)
