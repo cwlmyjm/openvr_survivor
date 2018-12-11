@@ -14,12 +14,13 @@
 #include <string>
 #include <thread>
 #include "keyboard_monitor.h"
+#include "hand_controller_component.h"
 
 typedef void (vr::IVRServerDriverHost::*ButtonUpdate)(uint32_t unWhichDevice, vr::EVRButtonId eButtonId, double eventTimeOffset);
 /**
 	CHandControllerDevice implement  ITrackedDeviceServerDriver and IVRControllerComponent.
 */
-class CHandControllerDevice : public ITrackedDeviceServerDriver,public IVRControllerComponent{
+class CHandControllerDevice : public ITrackedDeviceServerDriver{
 public:
 	/**
 		constructor.
@@ -56,13 +57,6 @@ public:
 		return track device pose.
 	*/		
 	DriverPose_t GetPose() override;	
-	
-	//implement IVRControllerComponent	
-
-	/** Gets the current state of a controller. */
-	VRControllerState_t GetControllerState( ) override;
-	/** Returns a uint64 property. If the property is not available this function will return 0. */
-	bool TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds ) override;
 	
 	//custom define function
 	const char *GetSerialNumber();
@@ -124,6 +118,7 @@ public:
 	
 
 private:
+	hand_controller_component * controller;
 	void ReportPoseButtonThread();//< report hand controller's pose and button state.
 	void GetButtonState(const KeyBoardForControllerButton& button_state);//< update button state
 	void SendButtonUpdates(ButtonUpdate ButtonEvent, uint64_t ulMask);//< helper function for TrackedDeviceButtonPressed,TrackedDeviceButtonUnpressed,TrackedDeviceButtonTouched,TrackedDeviceButtonUntouched 

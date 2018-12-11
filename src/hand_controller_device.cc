@@ -72,7 +72,10 @@ CHandControllerDevice::~CHandControllerDevice(){
 }
 
 EVRInitError CHandControllerDevice::Activate( uint32_t unObjectId ){
-	uint64_t u64_parameter;
+	controller = new hand_controller_component(unObjectId);
+	controller->CreateAllInputComponent();
+
+	//uint64_t u64_parameter;
 	m_nUniqueObjectId = unObjectId;
 	m_PropertyContainerHandle = vr::VRProperties()->TrackedDeviceToPropertyContainer(m_nUniqueObjectId);
 
@@ -87,7 +90,7 @@ EVRInitError CHandControllerDevice::Activate( uint32_t unObjectId ){
 	// set Properties that are unique to TrackedDeviceClass_Controller
 	vr::VRProperties()->SetInt32Property(m_PropertyContainerHandle, Prop_Axis0Type_Int32, k_eControllerAxis_TrackPad);
 	vr::VRProperties()->SetInt32Property(m_PropertyContainerHandle, Prop_Axis1Type_Int32, k_eControllerAxis_Trigger);
-	u64_parameter = vr::ButtonMaskFromId(vr::k_EButton_System) |
+	/*u64_parameter = vr::ButtonMaskFromId(vr::k_EButton_System) |
 		vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger) |
 		vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad) |
 		vr::ButtonMaskFromId(vr::k_EButton_A) |
@@ -97,7 +100,7 @@ EVRInitError CHandControllerDevice::Activate( uint32_t unObjectId ){
 		vr::ButtonMaskFromId(k_EButton_DPad_Down) |
 		vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu) |
 		vr::ButtonMaskFromId(vr::k_EButton_Grip);
-	vr::VRProperties()->SetUint64Property(m_PropertyContainerHandle, Prop_SupportedButtons_Uint64, u64_parameter);
+	vr::VRProperties()->SetUint64Property(m_PropertyContainerHandle, Prop_SupportedButtons_Uint64, u64_parameter);*/
 	// Set icons,you can select yourself icon.
 	switch (m_eHandController)
 	{
@@ -138,10 +141,6 @@ void CHandControllerDevice::EnterStandby(){
 }
 void *CHandControllerDevice::GetComponent( const char *pchComponentNameAndVersion ){
 
-	if (!_stricmp(pchComponentNameAndVersion, vr::IVRControllerComponent_Version))
-	{
-		return (IVRControllerComponent*)this;
-	}
 	if (!_stricmp(pchComponentNameAndVersion, vr::ITrackedDeviceServerDriver_Version))
 	{
 		return (ITrackedDeviceServerDriver*)this;
@@ -197,30 +196,6 @@ DriverPose_t CHandControllerDevice::GetPose(){
 #endif
 
 	return m_Pose;
-}
-
-VRControllerState_t CHandControllerDevice::GetControllerState( ){
-	LOG(INFO) << __FUNCTION__;
-	m_ControllerState.unPacketNum++;
-	return m_ControllerState;
-}
-bool CHandControllerDevice::TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds ){
-	LOG(INFO) << __FUNCTION__;
-#ifdef USE_NOLO_SIX_DOF_TRACKING_MODULE
-	if(m_eSixModuleType == NOLO_SIX_DOF_TRACKING_MODULE){
-		int intensity = usPulseDurationMicroseconds/40;	
-		if (intensity>50) {	
-			intensity = 50;
-		}
-		if(m_cControllerRole == 'L'){
-			NOLO::set_Nolo_TriggerHapticPulse(NOLO::LeftControllerDevice ,intensity + 50);
-		}else{
-			NOLO::set_Nolo_TriggerHapticPulse(NOLO::RightControllerDevice ,intensity + 50);
-		}
-
-	}
-#endif
-	return true;
 }
 
 const char *CHandControllerDevice::GetSerialNumber(){
@@ -620,33 +595,33 @@ vr::EVRButtonId CHandControllerDevice::GetDPadButton(const float& float_x,const 
 }
 
 void CHandControllerDevice::ReportControllerButton(const vr::VRControllerState_t& controller_state,void *p_vendor_state){
-	vr::EVRButtonId touch_pad_id = vr::k_EButton_Max;
-	vr::VRControllerState_t new_state = controller_state;
-	new_state.unPacketNum = m_ControllerState.unPacketNum + 1;
-	
-	if(new_state.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)){
-		touch_pad_id = GetDPadButton(new_state.rAxis[0].x,new_state.rAxis[0].y);
-		if(touch_pad_id != vr::k_EButton_Max){
-			new_state.ulButtonPressed |= vr::ButtonMaskFromId(touch_pad_id);
-		}
-	}
-	
-	new_state.ulButtonTouched |= new_state.ulButtonPressed;
+	//vr::EVRButtonId touch_pad_id = vr::k_EButton_Max;
+	//vr::VRControllerState_t new_state = controller_state;
+	//new_state.unPacketNum = m_ControllerState.unPacketNum + 1;
+	//
+	//if(new_state.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad)){
+	//	touch_pad_id = GetDPadButton(new_state.rAxis[0].x,new_state.rAxis[0].y);
+	//	if(touch_pad_id != vr::k_EButton_Max){
+	//		new_state.ulButtonPressed |= vr::ButtonMaskFromId(touch_pad_id);
+	//	}
+	//}
+	//
+	//new_state.ulButtonTouched |= new_state.ulButtonPressed;
 
-	uint64_t ulChangedTouched = new_state.ulButtonTouched ^ m_ControllerState.ulButtonTouched;
-	uint64_t ulChangedPressed = new_state.ulButtonPressed ^ m_ControllerState.ulButtonPressed;
+	//uint64_t ulChangedTouched = new_state.ulButtonTouched ^ m_ControllerState.ulButtonTouched;
+	//uint64_t ulChangedPressed = new_state.ulButtonPressed ^ m_ControllerState.ulButtonPressed;
 
-	SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonTouched, ulChangedTouched & new_state.ulButtonTouched);
-	SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonPressed, ulChangedPressed & new_state.ulButtonPressed);
-	SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonUnpressed, ulChangedPressed & ~new_state.ulButtonPressed);
-	SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonUntouched, ulChangedTouched & ~new_state.ulButtonTouched);
+	//SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonTouched, ulChangedTouched & new_state.ulButtonTouched);
+	//SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonPressed, ulChangedPressed & new_state.ulButtonPressed);
+	//SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonUnpressed, ulChangedPressed & ~new_state.ulButtonPressed);
+	//SendButtonUpdates(&vr::IVRServerDriverHost::TrackedDeviceButtonUntouched, ulChangedTouched & ~new_state.ulButtonTouched);
 
-	if(abs(new_state.rAxis[1].x - m_ControllerState.rAxis[1].x) > EPSILON)
-		vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_nUniqueObjectId, 1, new_state.rAxis[1]);
-	if (abs(new_state.rAxis[0].x - m_ControllerState.rAxis[0].x) > EPSILON
-		|| abs(new_state.rAxis[0].y - m_ControllerState.rAxis[0].y) > EPSILON)
-		vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_nUniqueObjectId, 0, new_state.rAxis[0]);
+	//if(abs(new_state.rAxis[1].x - m_ControllerState.rAxis[1].x) > EPSILON)
+	//	vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_nUniqueObjectId, 1, new_state.rAxis[1]);
+	//if (abs(new_state.rAxis[0].x - m_ControllerState.rAxis[0].x) > EPSILON
+	//	|| abs(new_state.rAxis[0].y - m_ControllerState.rAxis[0].y) > EPSILON)
+	//	vr::VRServerDriverHost()->TrackedDeviceAxisUpdated(m_nUniqueObjectId, 0, new_state.rAxis[0]);
 
-	m_ControllerState = new_state;
+	//m_ControllerState = new_state;
 }
 
